@@ -1,0 +1,5 @@
+USERS = "users"
+TRIPS = "trips"
+ITINERARIES = "itineraries"
+CONVERSATIONS = "conversations"
+FEEDBACK = "feedback"

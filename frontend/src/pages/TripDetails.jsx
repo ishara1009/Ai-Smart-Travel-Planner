@@ -1,0 +1,29 @@
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { getTrip, sendFeedback } from '../api/tripApi'
+import { approveTrip, modifyTrip, regenerateTrip } from '../api/plannerApi'
+import { errorMessage } from '../api/client'
+import LoadingSpinner from '../components/common/LoadingSpinner'
+import { ErrorState } from '../components/common/StatusView'
+import WeatherCard from '../components/weather/WeatherCard'
+import BudgetSummary from '../components/itinerary/BudgetSummary'
+import RecommendationCard from '../components/recommendations/RecommendationCard'
+import ItineraryTimeline from '../components/itinerary/ItineraryTimeline'
+import AgentProgress from '../components/itinerary/AgentProgress'
+
+export default function TripDetails() {
+  const { tripId } = useParams(); const [trip, setTrip] = useState(null); const [loading, setLoading] = useState(true); const [working, setWorking] = useState(false); const [error, setError] = useState(''); const [modifyOpen, setModifyOpen] = useState(false); const [instructions, setInstructions] = useState(''); const [feedback, setFeedback] = useState({ rating: 5, comment: '' }); const [feedbackSent, setFeedbackSent] = useState(false)
+  const load = useCallback(() => { setLoading(true); setError(''); getTrip(tripId).then(setTrip).catch((err) => setError(errorMessage(err))).finally(() => setLoading(false)) }, [tripId])
+  useEffect(load, [load])
+  const perform = async (action) => { setWorking(true); setError(''); try { setTrip(await action()) } catch (err) { setError(errorMessage(err)) } finally { setWorking(false) } }
+  const modify = async (event) => { event.preventDefault(); await perform(() => modifyTrip(tripId, instructions)); setModifyOpen(false); setInstructions('') }
+  const submitFeedback = async (event) => { event.preventDefault(); try { await sendFeedback(tripId, feedback); setFeedbackSent(true) } catch (err) { setError(errorMessage(err)) } }
+  if (loading) return <div className="page-center"><LoadingSpinner label="Opening your itinerary" /></div>
+  if (error && !trip) return <div className="container page-center"><ErrorState message={error} onRetry={load} /></div>
+  if (working) return <div className="container narrow working"><AgentProgress active={5} /></div>
+  return <section className="details-page"><div className="trip-hero"><div className="container"><Link className="back-link" to="/trips">← All saved trips</Link><div className="trip-title"><div><span className="eyebrow light-text">{trip.days} days · {trip.travelers} travelers</span><h1>{trip.destination}</h1><p>{new Date(`${trip.start_date}T00:00:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} · {trip.currency} {trip.budget.toLocaleString()}</p></div><span className={`status-pill ${trip.status === 'approved' ? 'success' : ''}`}>{trip.status.replaceAll('_', ' ')}</span></div></div></div><div className="container details-content">{error && <div className="alert error">{error}</div>}<div className="summary-grid"><WeatherCard weather={trip.weather} /><BudgetSummary budget={trip.budget_analysis} /></div>{trip.warnings?.length > 0 && <aside className="warning-box"><strong>Before you go</strong><ul>{trip.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></aside>}{trip.recommendations?.length > 0 && <section><div className="section-heading"><span className="eyebrow">Matched to you</span><h2>Recommended highlights</h2></div><div className="recommendation-grid">{trip.recommendations.map((item, index) => <RecommendationCard item={item} key={`${item.name}-${index}`} />)}</div></section>}<ItineraryTimeline itinerary={trip.itinerary} />
+    <section className="approval-panel"><div><span className="eyebrow light-text">You’re in control</span><h2>{trip.status === 'approved' ? 'This trip is approved.' : 'How does this route feel?'}</h2><p>Approve it, ask for a focused change, or create a fresh variation.</p></div><div>{trip.status !== 'approved' && <button className="button light-button" onClick={() => perform(() => approveTrip(tripId))}>Approve itinerary</button>}<button className="button outline-light" onClick={() => setModifyOpen((value) => !value)}>Modify</button><button className="text-button light-text" onClick={() => perform(() => regenerateTrip(tripId))}>Regenerate</button></div></section>
+    {modifyOpen && <form className="modify-panel" onSubmit={modify}><label>What would you like to change?<textarea required minLength="3" maxLength="2000" rows="4" placeholder="For example: Remove hiking from Day 2 and add a relaxed cultural activity." value={instructions} onChange={(e) => setInstructions(e.target.value)} /></label><div><button type="button" className="button secondary" onClick={() => setModifyOpen(false)}>Cancel</button><button className="button">Apply focused change</button></div></form>}
+    {trip.status === 'approved' && <section className="feedback-panel"><div><span className="eyebrow">Help us improve</span><h2>Was this plan useful?</h2></div>{feedbackSent ? <p className="form-success">Thanks—your feedback was saved.</p> : <form onSubmit={submitFeedback}><label>Rating<select value={feedback.rating} onChange={(e) => setFeedback({ ...feedback, rating: Number(e.target.value) })}>{[5,4,3,2,1].map((n) => <option value={n} key={n}>{n} / 5</option>)}</select></label><label>Comment<textarea maxLength="2000" rows="3" value={feedback.comment} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} /></label><button className="button">Send feedback</button></form>}</section>}
+    {trip.itinerary?.sources?.length > 0 && <section className="sources"><h2>Sources to verify</h2><ol>{trip.itinerary.sources.map((source) => <li key={source}><a href={source} target="_blank" rel="noreferrer">{source}</a></li>)}</ol></section>}</div></section>
+}

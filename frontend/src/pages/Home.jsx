@@ -1,0 +1,18 @@
+import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+
+const features = [
+  ['01', 'Weather-aware routes', 'Current conditions shape the rhythm of your day, with clear limitations whenever forecasts are unavailable.'],
+  ['02', 'A budget with breathing room', 'Transparent estimates for stays, food, transport, activities and a sensible reserve.'],
+  ['03', 'Recommendations with reasons', 'Every suggestion connects back to your interests, constraints and live travel sources.'],
+]
+
+export default function Home() {
+  const { user } = useAuth()
+  return <>
+    <section className="hero"><div className="container hero-grid"><div className="hero-copy"><span className="eyebrow">Seven specialists · One seamless journey</span><h1>Travel plans that feel <em>made for you.</em></h1><p>Tell us where you want to go. Our AI planning team researches, budgets, checks conditions, and shapes a grounded itinerary you can refine.</p><div className="hero-actions"><Link className="button" to={user ? '/planner' : '/register'}>Plan my trip <span>→</span></Link><a className="text-link" href="#how">See how it works</a></div><div className="trust-row"><span>✓ Live-source research</span><span>✓ Budget validation</span><span>✓ You approve every plan</span></div></div><div className="hero-visual" aria-label="Example travel plan preview"><div className="map-lines" /><div className="floating-note note-one"><span>☼</span><div><small>Weather checked</small><strong>Outdoor morning</strong></div></div><div className="destination-card"><span className="destination-number">03 days · curated</span><div className="landscape"><span className="sun" /><span className="hill h1" /><span className="hill h2" /></div><div className="destination-copy"><small>Your next story</small><h2>Kandy, Sri Lanka</h2><div><span>Culture</span><span>Nature</span><span>Local food</span></div></div></div><div className="floating-note note-two"><span>↗</span><div><small>Budget status</small><strong>10% reserve kept</strong></div></div></div></div></section>
+    <section className="feature-section"><div className="container"><div className="section-heading split"><div><span className="eyebrow">Planning intelligence</span><h2>More considered than a list of places</h2></div><p>Seven focused AI agents work in a controlled sequence, each responsible for one part of a trip you can actually use.</p></div><div className="feature-grid">{features.map(([number, title, body]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{body}</p></article>)}</div></div></section>
+    <section className="how-section" id="how"><div className="container how-grid"><div><span className="eyebrow light-text">How it works</span><h2>A thoughtful itinerary in three moves.</h2><p>Complex planning stays behind the scenes. You remain in control of the experience.</p></div><ol><li><span>1</span><div><h3>Describe your kind of trip</h3><p>Dates, budget, people, interests and the details that matter.</p></div></li><li><span>2</span><div><h3>Let the specialists collaborate</h3><p>Research, weather, budget, recommendations and scheduling are checked in order.</p></div></li><li><span>3</span><div><h3>Approve or shape the result</h3><p>Save it, regenerate it, or change only what you want.</p></div></li></ol></div></section>
+    <section className="cta-section"><div className="container cta-card"><span className="eyebrow">Where to next?</span><h2>Your best trip starts with a few good details.</h2><Link className="button light-button" to={user ? '/planner' : '/register'}>Start planning <span>→</span></Link></div></section>
+  </>
+}
